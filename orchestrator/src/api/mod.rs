@@ -136,17 +136,19 @@ impl OrchestratorApi {
             };
             if sent {
                 let rx = self.planet_rx.lock().unwrap();
-                recv_ack(&rx, API_TIMEOUT, "IncomingExplorerResponse", |msg| match msg {
-                    PlanetToOrchestrator::IncomingExplorerResponse { explorer_id: id, .. }
-                    if id == explorer_id =>
-                        {
-                            Ok(())
-                        }
-                    other => Err(other),
-                })?;
+                recv_ack(
+                    &rx,
+                    API_TIMEOUT,
+                    "IncomingExplorerResponse",
+                    |msg| match msg {
+                        PlanetToOrchestrator::IncomingExplorerResponse {
+                            explorer_id: id, ..
+                        } if id == explorer_id => Ok(()),
+                        other => Err(other),
+                    },
+                )?;
             }
         }
-
 
         // same for explorers (there can be a leftover Stop ack from a pause)
         let mut pending_explorers: std::collections::HashSet<ID> = {

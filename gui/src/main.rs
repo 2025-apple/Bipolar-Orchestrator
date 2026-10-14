@@ -34,10 +34,7 @@ use std::time::Duration;
 enum UiCommand {
     Sunray(u32),
     Asteroid(u32),
-    MoveExplorer {
-        explorer_id: u32,
-        dst: u32,
-    },
+    MoveExplorer { explorer_id: u32, dst: u32 },
     ToggleLogic,
     // bag/planet info needs a round trip, so it's only fetched on right-click
     InspectExplorer(u32),

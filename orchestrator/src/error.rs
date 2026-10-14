@@ -7,7 +7,10 @@ pub enum OrchestratorError {
     GalaxyFileError(String),
     PlanetNotFound(ID),
     ExplorerNotFound(ID),
-    NotANeighbor { from: ID, to: ID },
+    NotANeighbor {
+        from: ID,
+        to: ID,
+    },
     /// A send failed, the other side disconnected, or an ack timed out.
     ChannelError(String),
     /// `start_logic` while already running, or `stop_logic` while stopped.

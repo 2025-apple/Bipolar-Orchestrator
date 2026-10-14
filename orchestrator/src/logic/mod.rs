@@ -25,7 +25,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 // was 4s, but planets rolled so often that games were over way too fast
-const TICK_INTERVAL: Duration = Duration::from_secs(25);
+const TICK_INTERVAL: Duration = Duration::from_secs(5);
 
 // Has to be much shorter than TICK_INTERVAL: if explorers only got an answer
 // every 25s they'd time out and retry.
