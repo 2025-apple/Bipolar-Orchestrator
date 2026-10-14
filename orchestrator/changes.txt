@@ -1,0 +1,6 @@
+#1
+removing explorer jeb from builder.rs and main.rs
+    to impliment eco instead
+
+#2
+a planet only knows where to send its replies to an explorer after it receives IncomingExplorerRequest { explorer_id, new_sender }. in api => mod.rs we added I collect each explorer’s id, current planet and reply channel first, so I don’t hold the explorers lock while talking to planets. Then I send each planet an IncomingExplorerRequest and wait for its IncomingExplorerResponse, the same handshake a normal move uses.”
