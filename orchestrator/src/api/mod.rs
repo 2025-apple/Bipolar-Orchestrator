@@ -109,6 +109,45 @@ impl OrchestratorApi {
             pending_planets.remove(&planet_id);
         }
 
+        // Planets only answer explorers they know about, and the starting
+        // planet never got an IncomingExplorerRequest (that only happens on
+        // a move), so register each explorer on the planet it stands on.
+        let standing: Vec<_> = {
+            let explorers = self.explorers.lock().unwrap();
+            explorers
+                .iter()
+                .map(|h| (h.id(), h.current_planet(), h.planet_reply_tx()))
+                .collect()
+        };
+        for (explorer_id, planet_id, reply_tx) in standing {
+            let sent = {
+                let planets = self.planets.lock().unwrap();
+                if let Some(planet) = planets.get(planet_id) {
+                    planet
+                        .send(OrchestratorToPlanet::IncomingExplorerRequest {
+                            explorer_id,
+                            new_sender: reply_tx,
+                        })
+                        .map_err(OrchestratorError::ChannelError)?;
+                    true
+                } else {
+                    false // planet already destroyed, nothing to register on
+                }
+            };
+            if sent {
+                let rx = self.planet_rx.lock().unwrap();
+                recv_ack(&rx, API_TIMEOUT, "IncomingExplorerResponse", |msg| match msg {
+                    PlanetToOrchestrator::IncomingExplorerResponse { explorer_id: id, .. }
+                    if id == explorer_id =>
+                        {
+                            Ok(())
+                        }
+                    other => Err(other),
+                })?;
+            }
+        }
+
+
         // same for explorers (there can be a leftover Stop ack from a pause)
         let mut pending_explorers: std::collections::HashSet<ID> = {
             let explorers = self.explorers.lock().unwrap();

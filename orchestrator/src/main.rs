@@ -140,42 +140,33 @@ fn main() {
         log::info!("Spawned explorer 1 (Viviana) on planet 4");
     }
 
-    // Jeb
+    // Eco (takes the slot Jeb had: id 2, starting on planet 1)
     {
-        let (tx_to_jeb, rx_from_orch) = unbounded::<OrchestratorToExplorer>();
+        let (tx_to_eco, rx_from_orch) = unbounded::<OrchestratorToExplorer>();
         let (planet_reply_tx, rx_from_planet) = unbounded::<PlanetToExplorer>();
         let tx_planet = planet_registry
             .get(1)
             .expect("planet 1 not spawned")
             .explorer_sender();
-
-        let jeb = explorer_jebediah::create_explorer(
+        let eco = explorer_eco::create_explorer(
             2,
+            1,
             rx_from_orch,
             explorer_tx.clone(),
             rx_from_planet,
             tx_planet,
-            1,
-        )
-        .expect("failed to create Jeb");
-
+        );
         let thread = std::thread::Builder::new()
-            .name("explorer-jeb".into())
-            .spawn(move || {
-                if let Err(e) = jeb.run() {
-                    log::error!("Jeb explorer thread exited with error: {e}");
-                }
-            })
-            .expect("failed to spawn Jeb thread");
-
+            .name("explorer-eco".into())
+            .spawn(move || eco.run())
+            .expect("failed to spawn Eco thread");
         explorer_registry.insert(ExplorerHandle::new(
             2,
-            tx_to_jeb,
+            tx_to_eco,
             planet_reply_tx,
             1,
             thread,
         ));
-        log::info!("Spawned explorer 2 (Jeb) on planet 1");
     }
 
     let mut rng = rand::rng();

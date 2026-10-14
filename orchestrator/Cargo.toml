@@ -18,6 +18,7 @@ bevy = "0.19.0"
 # External explorer repos
 explorer_jebediah = { git = "https://github.com/TheFIXmess/explorer_jebediah.git" }
 explorer_astronaut = { git = "https://github.com/vivis2kuni/explorer_viviana.git" }
+explorer_eco = { path = "../../explorer_eco" }
 
 # External planet repos
 orbitron = { git = "https://github.com/Advanced-Programming-2025-Orbitron/Orbitron.git" }
@@ -31,3 +32,4 @@ enterprise = { git = "https://github.com/Thompspsps/Enterprise_planet.git" }
 bipolar-shared = { path = "../shared" }
 
 [dev-dependencies]
+
