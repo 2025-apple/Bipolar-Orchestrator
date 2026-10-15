@@ -2,7 +2,7 @@
 
 use crate::api::OrchestratorApi;
 use crate::probability::OrchestratorEvent;
-use bipolar_shared::{ExplorerSnapshot, GalaxyEvent, GalaxySnapshot, Personality, ResourceKind};
+use bipolar_shared::{EcoPanel, ExplorerSnapshot, GalaxyEvent, GalaxySnapshot, Personality, ResourceKind};
 use common_game::components::resource::{BasicResourceType, ComplexResourceType, ResourceType};
 use common_game::protocols::orchestrator_explorer::OrchestratorToExplorer;
 
@@ -105,6 +105,24 @@ pub fn build(api: &OrchestratorApi) -> GalaxySnapshot {
         (p, h, pe, evts)
     };
 
+    // Eco's own status, if it publishes one. Cloning it releases the lock
+    // right away, so Eco's thread is never kept waiting.
+    let eco = api
+        .eco_status
+        .as_ref()
+        .and_then(|sink| sink.lock().unwrap().clone())
+        .map(|s| EcoPanel {
+            day: s.day,
+            regime: format!("{:?}", s.regime),
+            coins: s.coins,
+            earned: s.earned,
+            spent: s.spent,
+            task: s
+                .task
+                .and_then(|t| resource_kind(ResourceType::Complex(t))),
+            waiting_for_income: s.waiting_for_income,
+        });
+
     GalaxySnapshot {
         personality,
         hostility,
@@ -113,5 +131,6 @@ pub fn build(api: &OrchestratorApi) -> GalaxySnapshot {
         explorers,
         events,
         neighbors,
+        eco,
     }
 }

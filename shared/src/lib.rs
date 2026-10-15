@@ -56,6 +56,20 @@ pub enum GalaxyEvent {
     },
 }
 
+// What the GUI shows about Eco (explorer 2). Plain numbers and text, built
+// by snapshot::build from explorer_eco's status.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EcoPanel {
+    pub day: u32,
+    pub regime: String, // "Neutral", "Flourish" or "Recession"
+    pub coins: i64,
+    pub earned: i64,
+    pub spent: i64,
+    pub task: Option<ResourceKind>,
+    pub waiting_for_income: bool,
+}
+
+
 // Built by the bridge thread about 4 times a second.
 #[derive(Clone, Debug, Default)]
 pub struct GalaxySnapshot {
@@ -69,4 +83,6 @@ pub struct GalaxySnapshot {
     pub events: Vec<GalaxyEvent>,
     // planet id -> alive neighbors (shrinks when planets die)
     pub neighbors: std::collections::HashMap<u32, Vec<u32>>,
+    // None until Eco has published its first status
+    pub eco: Option<EcoPanel>,
 }

@@ -80,6 +80,8 @@ pub fn build_api(galaxy_src: &str, planets_src: &str) -> OrchestratorApi {
         ));
     }
 
+    let eco_status = explorer_eco::StatusSink::default();
+
     // Eco (takes the slot Jeb had: id 2, starting on planet 1)
     {
         let (tx_to_eco, rx_from_orch) = unbounded::<OrchestratorToExplorer>();
@@ -95,7 +97,9 @@ pub fn build_api(galaxy_src: &str, planets_src: &str) -> OrchestratorApi {
             explorer_tx.clone(),
             rx_from_planet,
             tx_planet,
-        );
+        )
+            .with_status_sink(std::sync::Arc::clone(&eco_status));
+
         let thread = std::thread::Builder::new()
             .name("explorer-eco".into())
             .spawn(move || eco.run())
@@ -113,7 +117,7 @@ pub fn build_api(galaxy_src: &str, planets_src: &str) -> OrchestratorApi {
     let prob_registry = ProbabilityRegistry::new(planet_ids.iter().copied(), &mut rng);
     let forge = Forge::new().expect("failed to create Forge");
 
-    OrchestratorApi::new(
+    let mut api = OrchestratorApi::new(
         topology,
         planet_registry,
         explorer_registry,
@@ -121,5 +125,8 @@ pub fn build_api(galaxy_src: &str, planets_src: &str) -> OrchestratorApi {
         planet_rx,
         explorer_rx,
         forge,
-    )
+    );
+    api.eco_status = Some(eco_status);
+    api
+
 }

@@ -37,6 +37,8 @@ pub struct OrchestratorApi {
     // makes the sunrays and asteroids
     pub(crate) forge: Arc<Mutex<Forge>>,
     pub(crate) logic: LogicController,
+    // Eco's status cell, if Eco was given one (see builder.rs)
+    pub(crate) eco_status: Option<explorer_eco::StatusSink>,
 }
 
 impl OrchestratorApi {
@@ -59,6 +61,7 @@ impl OrchestratorApi {
             explorer_rx: Arc::new(Mutex::new(explorer_rx)),
             forge: Arc::new(Mutex::new(forge)),
             logic: LogicController::new(),
+            eco_status: None,
         }
     }
 

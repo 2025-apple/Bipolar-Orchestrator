@@ -18,14 +18,13 @@ use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use bevy::window::{CursorOptions, PrimaryWindow, WindowResolution};
-use bipolar_shared::{GalaxyEvent, GalaxySnapshot, Personality, ResourceKind};
 use crossbeam_channel::{Receiver as CmdReceiver, Sender as CmdSender};
 use rand::RngExt;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::f32::consts::{FRAC_PI_2, PI};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-
+use bipolar_shared::{EcoPanel, GalaxyEvent, GalaxySnapshot, Personality, ResourceKind};
 // --- Commands from the UI to the orchestrator ---
 //
 // OrchestratorApi methods block while waiting for acks (with timeouts of a
@@ -398,7 +397,7 @@ impl PlanetNames {
 fn explorer_display_name(id: u32) -> &'static str {
     match id {
         1 => "Viviana",
-        2 => "Jebediah",
+        2 => "eco",
         _ => "Unknown Explorer",
     }
 }
@@ -438,6 +437,8 @@ struct GalaxyState {
     // same problem as LiveSnapshot: before the first poll `alive` is empty,
     // so sync_planets waits for this
     ready: bool,
+    // Eco's latest status, None until it has published one
+    eco: Option<EcoPanel>,
 }
 
 #[derive(Clone, Copy, PartialEq, Default)]
@@ -1440,6 +1441,7 @@ fn poll_snapshot(
         .collect();
     state.neighbors.clone_from(&snap.neighbors);
     state.hostility = snap.hostility;
+    state.eco = snap.eco.clone();
     state.phase_elapsed = snap.phase_elapsed;
 }
 
@@ -2620,9 +2622,26 @@ fn sync_hologram_visibility(
     }
 }
 
+// The economy part of Eco's hologram. Plain text, one fact per line.
+fn eco_status_text(eco: &EcoPanel) -> String {
+    let task = eco
+        .task
+        .map_or_else(|| "none".to_string(), |t| format!("{t:?}"));
+    let state = if eco.waiting_for_income {
+        "waiting for income"
+    } else {
+        "working"
+    };
+    format!(
+        "Day {} - {}\nCoins: {}\nEarned: {}\nSpent: {}\nTask: {}\nStatus: {}\n\n",
+        eco.day, eco.regime, eco.coins, eco.earned, eco.spent, task, state
+    )
+}
+
 fn sync_hologram_content(
     inspection: Res<Inspection>,
     names: Res<PlanetNames>,
+    state: Res<GalaxyState>,
     mut expl_text: Query<&mut Text, (With<ExplorerHologramText>, Without<PlanetHologramText>)>,
     mut planet_text: Query<&mut Text, (With<PlanetHologramText>, Without<ExplorerHologramText>)>,
 ) {
@@ -2632,7 +2651,14 @@ fn sync_hologram_content(
     match &*data {
         InspectionData::None => {}
         InspectionData::ExplorerBag { id, bag_lines } => {
-            let mut s = format!("{}\n\nBAG:\n", explorer_display_name(*id));
+            let mut s = format!("{}\n\n", explorer_display_name(*id));
+            // Eco (id 2) also shows its economy; other explorers don't have one
+            if *id == 2 {
+                if let Some(eco) = &state.eco {
+                    s.push_str(&eco_status_text(eco));
+                }
+            }
+            s.push_str("BAG:\n");
             for line in bag_lines {
                 s.push_str("- ");
                 s.push_str(line);
