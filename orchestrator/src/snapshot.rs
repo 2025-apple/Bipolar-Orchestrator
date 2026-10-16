@@ -121,7 +121,8 @@ pub fn build(api: &OrchestratorApi) -> GalaxySnapshot {
                 .task
                 .and_then(|t| resource_kind(ResourceType::Complex(t))),
             waiting_for_income: s.waiting_for_income,
-        });
+            decision: s.decision,
+        });        
 
     GalaxySnapshot {
         personality,
