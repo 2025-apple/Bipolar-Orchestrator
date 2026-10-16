@@ -67,6 +67,7 @@ pub struct EcoPanel {
     pub spent: i64,
     pub task: Option<ResourceKind>,
     pub waiting_for_income: bool,
+    pub decision: Option<(String, u32)>,
 }
 
 

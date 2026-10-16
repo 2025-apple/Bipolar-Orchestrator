@@ -1085,8 +1085,15 @@ fn main() {
             drain_ui_commands(&cmd_rx, &mut api, &mut logic_running, &inspection_write);
 
             std::thread::sleep(Duration::from_millis(250));
-            let s = bipolar_orchestrator::snapshot::build(&api);
-            *snap_write.lock().unwrap() = Some(s);
+            let mut s = bipolar_orchestrator::snapshot::build(&api);
+            let mut slot = snap_write.lock().unwrap();
+            if let Some(old) = slot.as_mut() {
+                // events the GUI has not read yet must not be lost
+                let mut unread = std::mem::take(&mut old.events);
+                unread.append(&mut s.events);
+                s.events = unread;
+            }
+            *slot = Some(s);
         }
     });
 
@@ -2632,9 +2639,13 @@ fn eco_status_text(eco: &EcoPanel) -> String {
     } else {
         "working"
     };
+    let decision = match &eco.decision {
+        Some((what, cost)) => format!("{what}, cost {cost}"),
+        None => "none yet".to_string(),
+    };
     format!(
-        "Day {} - {}\nCoins: {}\nEarned: {}\nSpent: {}\nTask: {}\nStatus: {}\n\n",
-        eco.day, eco.regime, eco.coins, eco.earned, eco.spent, task, state
+        "Day {} - {}\nCoins: {}\nEarned: {}\nSpent: {}\nTask: {}\nDecision: {}\nStatus: {}\n\n",
+        eco.day, eco.regime, eco.coins, eco.earned, eco.spent, task, decision, state
     )
 }
 
