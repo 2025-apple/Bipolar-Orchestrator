@@ -16,6 +16,7 @@ rand = "0.10.1"
 bevy = "0.19.0"
 
 # External explorer repos
+explorer_jebediah = { git = "https://github.com/TheFIXmess/explorer_jebediah.git" }
 explorer_astronaut = { git = "https://github.com/vivis2kuni/explorer_viviana.git" }
 explorer_eco = { git = "https://github.com/luna4-ap2025/explorer_AP_UNITN-2025.git", branch = "master" }
 # External planet repos
